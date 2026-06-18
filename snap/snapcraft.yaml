@@ -1,0 +1,54 @@
+name: dforge
+base: core22
+version: '0.1.0'
+summary: Serverless decentralized Git on IPFS + Blockchain
+description: |
+  DecentraForge (dforge) is a serverless, decentralized version control system
+  combining Git semantics with IPFS content-addressed storage and Ethereum
+  blockchain for access control — no central server required.
+
+  Key features:
+  - Full Git workflow: init, commit, branch, merge, push, pull
+  - Encrypted repositories (AES-256-GCM, client-side only)
+  - Shamir Secret Sharing for key distribution (2-of-3 threshold)
+  - IPFS content-addressed storage (push/pull without a server)
+  - Ed25519 identity and signed commits
+  - Trigram code search
+  - Pull requests and issues stored as signed objects on IPFS
+  - lazygit-style TUI (run: dforge tui)
+
+  Usage:
+    dforge init my-project
+    dforge commit -m "first commit"
+    dforge push
+    dforge explore --list
+
+grade: stable
+confinement: classic
+
+architectures:
+  - build-on: amd64
+
+parts:
+  dforge:
+    plugin: rust
+    source: .
+    rust-channel: stable
+    build-packages:
+      - libssl-dev
+      - pkg-config
+      - build-essential
+    stage-packages:
+      - libssl3
+      - ca-certificates
+    override-build: |
+      craftenv
+      cargo build --release --bin dforge
+      install -Dm755 target/release/dforge "$CRAFT_PART_INSTALL/bin/dforge"
+
+apps:
+  dforge:
+    command: bin/dforge
+    environment:
+      HOME: $SNAP_USER_DATA
+      RUST_LOG: warn

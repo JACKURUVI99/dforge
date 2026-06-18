@@ -1,0 +1,14 @@
+[package]
+name = "dforge-tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dforge-core   = { path = "../dforge-core" }
+dforge-crypto = { path = "../dforge-crypto" }
+dforge-search = { path = "../dforge-search" }
+ratatui    = { workspace = true }
+crossterm  = { workspace = true }
+anyhow     = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }

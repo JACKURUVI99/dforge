@@ -1,0 +1,10 @@
+[package]
+name = "dforge-search"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dforge-crypto = { path = "../dforge-crypto" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }

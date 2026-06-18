@@ -1,0 +1,21 @@
+[package]
+name = "dforge-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "dforge"
+path = "src/main.rs"
+
+[dependencies]
+dforge-crypto = { path = "../dforge-crypto" }
+dforge-core   = { path = "../dforge-core" }
+dforge-ipfs   = { path = "../dforge-ipfs" }
+dforge-search = { path = "../dforge-search" }
+dforge-tui    = { path = "../dforge-tui" }
+tokio = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+hex = { workspace = true }

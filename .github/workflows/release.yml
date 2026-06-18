@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux (x86_64)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: sudo apt-get install -y libssl-dev pkg-config build-essential
+
+      - name: Build release binary
+        run: cargo build --release --bin dforge
+
+      - name: Strip binary
+        run: strip target/release/dforge
+
+      - name: Build .deb package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p packaging/dforge_${VERSION}_amd64/{DEBIAN,usr/local/bin,usr/share/doc/dforge}
+          cp target/release/dforge packaging/dforge_${VERSION}_amd64/usr/local/bin/
+          cat > packaging/dforge_${VERSION}_amd64/DEBIAN/control <<EOF
+          Package: dforge
+          Version: ${VERSION}-1
+          Section: vcs
+          Priority: optional
+          Architecture: amd64
+          Depends: libssl3, ca-certificates
+          Maintainer: Harish <mailtoharish200@gmail.com>
+          Homepage: https://github.com/${{ github.repository }}
+          Description: Serverless decentralized Git on IPFS + Blockchain
+           DecentraForge combines Git semantics with IPFS storage and Ethereum
+           blockchain for access control. No central server required.
+          EOF
+          echo "#!/bin/sh" > packaging/dforge_${VERSION}_amd64/DEBIAN/postinst
+          echo "echo 'dforge installed. Run dforge --help to get started.'" >> packaging/dforge_${VERSION}_amd64/DEBIAN/postinst
+          chmod 755 packaging/dforge_${VERSION}_amd64/DEBIAN/postinst
+          dpkg-deb --root-owner-group --build packaging/dforge_${VERSION}_amd64
+          mv packaging/dforge_${VERSION}_amd64.deb dforge_${VERSION}_amd64.deb
+
+      - name: Rename binary for release
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cp target/release/dforge dforge-linux-amd64
+          tar czf dforge-${VERSION}-linux-amd64.tar.gz -C target/release dforge
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dforge-linux-amd64
+            dforge-*.tar.gz
+            dforge_*_amd64.deb
+          generate_release_notes: true
+
+  build-snap:
+    name: Build and Publish Snap
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Snap
+        uses: snapcore/action-build@v1
+        id: build-snap
+
+      - name: Publish to Snap Store (edge channel)
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+        with:
+          snap: ${{ steps.build-snap.outputs.snap }}
+          release: edge
+
+  build-macos:
+    name: Build macOS (Apple Silicon + Intel)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+
+      - name: Build universal binary
+        run: |
+          cargo build --release --bin dforge --target aarch64-apple-darwin
+          cargo build --release --bin dforge --target x86_64-apple-darwin
+          lipo -create \
+            target/aarch64-apple-darwin/release/dforge \
+            target/x86_64-apple-darwin/release/dforge \
+            -output dforge-macos-universal
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dforge-macos-universal

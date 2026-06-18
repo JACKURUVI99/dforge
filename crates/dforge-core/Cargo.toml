@@ -1,0 +1,14 @@
+[package]
+name = "dforge-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dforge-crypto = { path = "../dforge-crypto" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
