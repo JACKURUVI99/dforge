@@ -1,0 +1,4 @@
+/target/
+packaging/debian/dforge_*/
+*.deb
+*.snap

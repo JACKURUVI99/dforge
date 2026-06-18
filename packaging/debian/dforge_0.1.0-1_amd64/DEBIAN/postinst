@@ -1,3 +1,0 @@
-#!/bin/sh
-set -e
-echo "dforge installed. Run 'dforge --help' to get started."
